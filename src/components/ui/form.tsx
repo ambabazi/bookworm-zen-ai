@@ -1,8 +1,8 @@
 import { useState } from "react";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { Label } from "./ui/label";
-import { Textarea } from "./ui/textarea";
+import { Input } from "./input";
+import { Button } from "./button";
+import { Label } from "./label";
+import { Textarea } from "./textarea";
 
 export default function Form() {
   const [formData, setFormData] = useState({
