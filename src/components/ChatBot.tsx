@@ -51,35 +51,37 @@ export function ChatBot() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("https://ambabazi00.app.n8n.cloud/webhook/chatapp", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          message: userMessage.text,
-          timestamp: userMessage.timestamp.toISOString(),
-          sessionId: `session_${Date.now()}`,
-          context: "book_store_website",
-        }),
-      });
+    const formData = new FormData();
+    formData.append("message", userMessage.text);
+    formData.append("timestamp", userMessage.timestamp.toISOString());
+    formData.append("sessionId", `session_${Date.now()}`);
+    formData.append("context", "book_store_website");
 
-      if (!response.ok) {
-        throw new Error("Failed to get response from chatbot");
-      }
+    const response = await fetch("https://ambabazi00.app.n8n.cloud/webhook/chatapp", {
+      method: "POST",
+      body: formData, // 👈 now sending form-data
+    });
+
+    if (!response.ok) {
+      throw new Error("Failed to get response from chatbot");
+    }
 
       const data = await response.json();
       
       const botMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        text: data.response || data.message || "I'm sorry, I couldn't process that request. Please try again.",
-        sender: "bot",
-        timestamp: new Date(),
-      };
+      id: (Date.now() + 1).toString(),
+      text:
+        data.output ||
+        data.response ||
+        data.message ||
+        "I'm sorry, I couldn't process that request. Please try again.",
+      sender: "bot",
+      timestamp: new Date(),
+    };
 
-      setMessages(prev => [...prev, botMessage]);
-    } catch (error) {
-      console.error("Chatbot error:", error);
+    setMessages(prev => [...prev, botMessage]);
+  } catch (error) {
+    console.error("Chatbot error:", error);
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
