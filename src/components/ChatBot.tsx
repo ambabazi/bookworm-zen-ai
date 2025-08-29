@@ -51,33 +51,55 @@ export function ChatBot() {
     setIsLoading(true);
 
     try {
-    const formData = new FormData();
-    formData.append("message", userMessage.text);
-    formData.append("timestamp", userMessage.timestamp.toISOString());
-    formData.append("sessionId", `session_${Date.now()}`);
-    formData.append("context", "book_store_website");
+      const formData = new FormData();
+      formData.append("message", userMessage.text);
+      formData.append("timestamp", userMessage.timestamp.toISOString());
+      formData.append("sessionId", `session_${Date.now()}`);
+      formData.append("context", "bookstore_customer_chat");
 
-    const response = await fetch("https://ambabazi00.app.n8n.cloud/webhook/chatapp", {
-      method: "POST",
-      body: formData, // 👈 now sending form-data
-    });
+      const response = await fetch("https://ambabazi00.app.n8n.cloud/webhook/chatapp", {
+        method: "POST",
+        body: formData,
+      });
 
-    if (!response.ok) {
-      throw new Error("Failed to get response from chatbot");
-    }
+      if (!response.ok) {
+        throw new Error("Failed to get response from chatbot");
+      }
 
       const data = await response.json();
       
+      // Parse the response - handle both direct text and JSON structured responses
+      let responseText = "";
+      
+      if (typeof data === 'string') {
+        responseText = data;
+      } else if (data.output) {
+        responseText = data.output;
+      } else if (data.response) {
+        responseText = data.response;
+      } else if (data.message) {
+        responseText = data.message;
+      } else if (data.text) {
+        responseText = data.text;
+      } else {
+        // If it's a JSON object with subject/body (email format), extract conversational content
+        try {
+          if (typeof data === 'object' && (data.subject || data.body)) {
+            responseText = "I'm here to help you with book recommendations and store information! What can I assist you with today?";
+          } else {
+            responseText = "I'm sorry, I couldn't process that request. Please try again.";
+          }
+        } catch {
+          responseText = "I'm here to help! How can I assist you with finding the perfect book today?";
+        }
+      }
+
       const botMessage: Message = {
-      id: (Date.now() + 1).toString(),
-      text:
-        data.output ||
-        data.response ||
-        data.message ||
-        "I'm sorry, I couldn't process that request. Please try again.",
-      sender: "bot",
-      timestamp: new Date(),
-    };
+        id: (Date.now() + 1).toString(),
+        text: responseText,
+        sender: "bot",
+        timestamp: new Date(),
+      };
 
     setMessages(prev => [...prev, botMessage]);
   } catch (error) {
